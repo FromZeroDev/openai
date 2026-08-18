@@ -16,6 +16,9 @@ final class OpenAIChatCompletionChoiceMessageModel {
   /// The [content] of the message.
   final List<OpenAIChatCompletionChoiceMessageContentItemModel>? content;
 
+  /// The [reasoning_content] of the message.
+  final List<OpenAIChatCompletionChoiceMessageContentItemModel>? reasoningContent;
+
   /// The function that the model is requesting to call.
   final List<OpenAIResponseToolCall>? toolCalls;
 
@@ -37,6 +40,7 @@ final class OpenAIChatCompletionChoiceMessageModel {
   const OpenAIChatCompletionChoiceMessageModel({
     required this.role,
     required this.content,
+    this.reasoningContent,
     this.toolCalls,
     this.name,
   });
@@ -53,6 +57,11 @@ final class OpenAIChatCompletionChoiceMessageModel {
           ? OpenAIMessageDynamicContentFromFieldAdapter.dynamicContentFromField(
               json['content'],
             )
+          : null,
+      reasoningContent: json['reasoning_content'] != null
+          ? OpenAIMessageDynamicContentFromFieldAdapter.dynamicContentFromField(
+            json['reasoning_content'],
+          )
           : null,
       toolCalls: json['tool_calls'] != null
           ? (json['tool_calls'] as List)
@@ -112,6 +121,7 @@ final class OpenAIChatCompletionChoiceMessageModel {
     return RequestFunctionMessage(
       content: this.content,
       role: this.role,
+      reasoningContent: this.reasoningContent,
       toolCallId: toolCallId,
     );
   }
@@ -129,6 +139,7 @@ base class RequestFunctionMessage
   RequestFunctionMessage({
     required super.role,
     required super.content,
+    required super.reasoningContent,
     required this.toolCallId,
   });
 

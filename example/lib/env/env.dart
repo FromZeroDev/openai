@@ -1,10 +1,7 @@
 // lib/env/env.dart
-import 'package:envied/envied.dart';
+import 'dart:io';
 
-part 'env.g.dart';
-
-@Envied(path: '.env')
 abstract class Env {
-  @EnviedField(varName: 'OPEN_AI_API_KEY')
-  static const String apiKey = _Env.apiKey;
+  static String apiKey = Platform.environment["API_KEY"]!;
+  static String model = Platform.environment["AI_MODEL"]!;
 }
