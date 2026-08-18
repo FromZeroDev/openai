@@ -73,15 +73,20 @@ final class OpenAIChatCompletionChoiceMessageModel {
 
 // This method used to convert the [OpenAIChatCompletionChoiceMessageModel] to a [Map<String, dynamic>] object.
   Map<String, dynamic> toMap() {
-    final content_ = () {
+    Object? _fromContent(List<OpenAIChatCompletionChoiceMessageContentItemModel>? content) {
       if (content?.length == 1) return content?.first.toMap(single: true);
 
       return content?.map((contentItem) => contentItem.toMap()).toList();
-    }();
+    }
+
+    final content_ = _fromContent(content);
+
+    final reasoningContent_ = _fromContent(reasoningContent);
 
     return {
       "role": role.name,
       "content": content_,
+      "reasoning_content": reasoningContent_,
       if (toolCalls != null && role == OpenAIChatMessageRole.assistant)
         "tool_calls": toolCalls!.map((toolCall) => toolCall.toMap()).toList(),
       if (name != null) "name": name,
@@ -92,10 +97,12 @@ final class OpenAIChatCompletionChoiceMessageModel {
   String toString() {
     String str = 'OpenAIChatCompletionChoiceMessageModel('
         'role: $role, '
-        'content: $content, ';
-
+        'content: $content';
+    if (reasoningContent != null) {
+      str += ', reasoningContent: $reasoningContent';
+    }
     if (toolCalls != null) {
-      str += 'toolCalls: $toolCalls, ';
+      str += ', toolCalls: $toolCalls';
     }
     str += ')';
 
@@ -139,7 +146,7 @@ base class RequestFunctionMessage
   RequestFunctionMessage({
     required super.role,
     required super.content,
-    required super.reasoningContent,
+    super.reasoningContent,
     required this.toolCallId,
   });
 

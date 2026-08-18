@@ -10,7 +10,10 @@ final class OpenAIStreamChatCompletionChoiceDeltaModel {
   final OpenAIChatMessageRole? role;
 
   /// The [content] of the message.
-  final List<OpenAIChatCompletionChoiceMessageContentItemModel?>? content;
+  final List<OpenAIChatCompletionChoiceMessageContentItemModel>? content;
+
+  /// The [reasoning_content] of the message.
+  final List<OpenAIChatCompletionChoiceMessageContentItemModel>? reasoningContent;
 
   /// The [toolCalls] of the message.
   final List<OpenAIResponseToolCall>? toolCalls;
@@ -33,6 +36,7 @@ final class OpenAIStreamChatCompletionChoiceDeltaModel {
   const OpenAIStreamChatCompletionChoiceDeltaModel({
     required this.role,
     required this.content,
+    this.reasoningContent,
     this.toolCalls,
   });
 
@@ -50,6 +54,11 @@ final class OpenAIStreamChatCompletionChoiceDeltaModel {
               json['content'],
             )
           : null,
+      reasoningContent: json['reasoning_content'] != null
+          ? OpenAIMessageDynamicContentFromFieldAdapter.dynamicContentFromField(
+              json['reasoning_content'],
+            )
+          : null,
       toolCalls: json['tool_calls'] != null
           ? (json['tool_calls'] as List)
               .map((toolCall) => OpenAIStreamResponseToolCall.fromMap(toolCall))
@@ -60,9 +69,20 @@ final class OpenAIStreamChatCompletionChoiceDeltaModel {
 
   /// This method used to convert the [OpenAIChatCompletionChoiceMessageModel] to a [Map<String, dynamic>] object.
   Map<String, dynamic> toMap() {
+    Object? _fromContent(List<OpenAIChatCompletionChoiceMessageContentItemModel>? content) {
+      if (content?.length == 1) return content?.first.toMap(single: true);
+
+      return content?.map((contentItem) => contentItem.toMap()).toList();
+    }
+
+    final content_ = _fromContent(content);
+
+    final reasoningContent_ = _fromContent(reasoningContent);
+
     return {
       "role": role?.name,
-      "content": content,
+      "content": content_,
+      "reasoning_content": reasoningContent_,
       "tool_calls": toolCalls?.map((toolCall) => toolCall.toMap()).toList(),
     };
   }
@@ -71,9 +91,12 @@ final class OpenAIStreamChatCompletionChoiceDeltaModel {
   String toString() {
     String str = 'OpenAIChatCompletionChoiceMessageModel('
         'role: $role, '
-        'content: $content, ';
+        'content: $content';
+    if (reasoningContent != null) {
+      str += ', reasoningContent: $reasoningContent';
+    }
     if (toolCalls != null) {
-      str += 'toolCalls: $toolCalls, ';
+      str += ', toolCalls: $toolCalls';
     }
 
     str += ')';
