@@ -52,7 +52,7 @@ final class OpenAIStreamChatCompletionModel {
   factory OpenAIStreamChatCompletionModel.fromMap(Map<String, dynamic> json) {
     try {
       return OpenAIStreamChatCompletionModel(
-        id: json['id'] ?? -1,
+        id: json['id'] ?? "",
         created: json['created'] != null ? DateTime.fromMillisecondsSinceEpoch(json['created'] * 1000) : DateTime.now(),
         choices: (json['choices'] as List)
             .map(
