@@ -40,6 +40,7 @@ abstract class CreateInterface {
     String? user,
     http.Client? client,
     int? seed,
+    Map<String, String>? headers,
   });
 
   Stream<OpenAIStreamChatCompletionModel> createRemoteFunctionStream({

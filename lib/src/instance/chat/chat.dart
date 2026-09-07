@@ -151,6 +151,8 @@ interface class OpenAIChat implements OpenAIChatBase {
   ///
   /// [user] is a unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse.
   ///
+  /// [headers] are custom headers that will be added to this specific request only.
+  ///
   /// Example:
   /// ```dart
   /// final chatStream = OpenAI.instance.chat.createStream(
@@ -184,9 +186,11 @@ interface class OpenAIChat implements OpenAIChatBase {
     http.Client? client,
     Map<String, dynamic>? streamOptions,
     Map<String, dynamic>? extraParams,
+    Map<String, String>? headers,
   }) {
     return OpenAINetworkingClient.postStream<OpenAIStreamChatCompletionModel>(
       to: BaseApiUrlBuilder.build(endpoint),
+      headers: headers,
       body: {
         "model": model,
         "stream": true,

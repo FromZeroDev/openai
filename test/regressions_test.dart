@@ -1,7 +1,7 @@
 import 'dart:convert';
+import 'dart:io';
 
-import 'package:dart_openai/src/core/enum.dart';
-import 'package:dart_openai/src/core/models/chat/sub_models/choices/sub_models/sub_models/content.dart';
+import 'package:dart_openai/dart_openai.dart';
 import 'package:dart_openai/src/core/networking/client.dart';
 import 'package:dart_openai/src/instance/audio/audio.dart';
 import 'package:http/http.dart' as http;
@@ -9,10 +9,12 @@ import 'package:test/test.dart';
 
 void main() {
   group('regressions', () {
-    test('serializes image_url content without nesting the url object twice',
-        () {
-      final content =
-          OpenAIChatCompletionChoiceMessageContentItemModel.imageUrl(
+    setUpAll(() {
+      OpenAI.apiKey = 'test-api-key';
+    });
+
+    test('serializes image_url content without nesting the url object twice', () {
+      final content = OpenAIChatCompletionChoiceMessageContentItemModel.imageUrl(
         'https://example.com/image.png',
       );
 
@@ -25,8 +27,7 @@ void main() {
       );
     });
 
-    test('builds a request failure from non-standard string error payloads',
-        () {
+    test('builds a request failure from non-standard string error payloads', () {
       final exception = OpenAINetworkingClient.requestFailedExceptionFromMap(
         {
           'timestamp': '2026-04-21T11:44:16.913+00:00',
@@ -45,8 +46,7 @@ void main() {
     });
 
     test('builds a request failure from raw non-json stream bodies', () {
-      final exception =
-          OpenAINetworkingClient.requestFailedExceptionFromRawBody(
+      final exception = OpenAINetworkingClient.requestFailedExceptionFromRawBody(
         '<html>forbidden</html>',
         403,
       );
@@ -55,9 +55,7 @@ void main() {
       expect(exception.message, '<html>forbidden</html>');
     });
 
-    test(
-        'postStream surfaces non-json error bodies instead of silently swallowing them',
-        () async {
+    test('postStream surfaces non-json error bodies instead of silently swallowing them', () async {
       final stream = OpenAINetworkingClient.postStream<Map<String, dynamic>>(
         to: 'https://example.com/v1/chat/completions',
         onSuccess: (json) => json,
@@ -81,8 +79,35 @@ void main() {
       );
     });
 
-    test('post converts string error payloads into RequestFailedException',
-        () async {
+    test('postStream attaches custom headers to the request', () async {
+      final recordedRequests = <http.BaseRequest>[];
+
+      final stream = OpenAINetworkingClient.postStream<Map<String, dynamic>>(
+        to: 'https://example.com/v1/chat/completions',
+        onSuccess: (json) => json,
+        body: const {'stream': true},
+        headers: const {'x-openai-test': 'test-value'},
+        client: _HeaderRecordingClient(recordedRequests),
+      );
+
+      await expectLater(stream, emitsDone);
+
+      expect(recordedRequests, hasLength(1));
+      expect(
+        recordedRequests.single.headers,
+        containsPair('x-openai-test', 'test-value'),
+      );
+      expect(
+        recordedRequests.single.headers,
+        containsPair('Content-Type', 'application/json; charset=utf-8'),
+      );
+      expect(
+        recordedRequests.single.headers,
+        containsPair('Authorization', 'Bearer test-api-key'),
+      );
+    });
+
+    test('post converts string error payloads into RequestFailedException', () async {
       final future = OpenAINetworkingClient.post<Map<String, dynamic>>(
         to: 'https://example.com/v1/chat/completions',
         onSuccess: (json) => json,
@@ -110,8 +135,7 @@ void main() {
       );
     });
 
-    test('rejects unsupported legacy TTS voice and model combinations',
-        () async {
+    test('rejects unsupported legacy TTS voice and model combinations', () async {
       final future = OpenAIAudio().createSpeechBytes(
         model: 'tts-1',
         input: 'Hello from ballad.',
@@ -133,10 +157,8 @@ void main() {
 }
 
 class _FakeClient extends http.BaseClient {
-  final Future<http.Response> Function(http.BaseRequest request)?
-      _onSendResponse;
-  final Future<http.StreamedResponse> Function(http.BaseRequest request)?
-      _onSendStreamedResponse;
+  final Future<http.Response> Function(http.BaseRequest request)? _onSendResponse;
+  final Future<http.StreamedResponse> Function(http.BaseRequest request)? _onSendStreamedResponse;
 
   _FakeClient.response({
     required int statusCode,
@@ -173,6 +195,23 @@ class _FakeClient extends http.BaseClient {
       headers: response.headers,
       request: request,
       reasonPhrase: response.reasonPhrase,
+    );
+  }
+}
+
+class _HeaderRecordingClient extends http.BaseClient {
+  _HeaderRecordingClient(this.recordedRequests);
+
+  final List<http.BaseRequest> recordedRequests;
+
+  @override
+  Future<http.StreamedResponse> send(http.BaseRequest request) async {
+    recordedRequests.add(request);
+
+    return http.StreamedResponse(
+      const Stream<List<int>>.empty(),
+      HttpStatus.ok,
+      request: request,
     );
   }
 }

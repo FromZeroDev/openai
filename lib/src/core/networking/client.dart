@@ -355,14 +355,18 @@ abstract class OpenAINetworkingClient {
     required T Function(Map<String, dynamic>) onSuccess,
     required Map<String, dynamic> body,
     http.Client? client,
+    Map<String, String>? headers,
   }) async* {
     try {
       final clientForUse = client ?? _streamingHttpClient();
       final uri = Uri.parse(to);
-      final headers = HeadersBuilder.build();
+      final builtHeaders = HeadersBuilder.build();
       final httpMethod = OpenAIStrings.postMethod;
       final request = http.Request(httpMethod, uri);
-      request.headers.addAll(headers);
+      request.headers.addAll(builtHeaders);
+      if (headers != null) {
+        request.headers.addAll(headers);
+      }
       request.body = jsonEncode(body);
 
       OpenAILogger.logStartRequest(to);
