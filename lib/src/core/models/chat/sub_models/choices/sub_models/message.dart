@@ -5,6 +5,7 @@ import 'sub_models/content.dart';
 import 'sub_models/tool_call.dart';
 export 'sub_models/content.dart';
 export 'sub_models/tool_call.dart';
+export 'sub_models/sub_models/response_function_call.dart';
 
 /// {@template openai_chat_completion_choice_message_model}
 /// This represents the message of the [OpenAIChatCompletionChoiceModel] model of the OpenAI API, which is used and get returned while using the [OpenAIChat] methods.
